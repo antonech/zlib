@@ -325,6 +325,19 @@ int __inline __builtin_ctzl(unsigned long mask)
 
     return _BitScanForward(&index, mask) == 0 ? 32 : ((int)index) ;
 }
+#elif __SUNPRO_C
+
+/* SUN Studio 12.3 doesn't have __builtin_expect.  Just ignore likely/unlikely and
+   hope the compiler optimizes for the best.
+*/
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+
+int __inline __builtin_ctzl(unsigned long mask)
+{
+    static const int DeBruijnBytePos[32] = { 0, 0, 3, 0, 3, 1, 3, 0, 3, 2, 2, 1, 3, 2, 0, 1, 3, 3, 1, 2, 2, 2, 2, 0, 3, 1, 2, 0, 1, 0, 1, 1 };
+    return DeBruijnBytePos[((uint32_t)((mask & -(int32_t)mask) * 0x077CB531U)) >> 27];
+}
 #else
 #define likely(x)       __builtin_expect((x),1)
 #define unlikely(x)     __builtin_expect((x),0)

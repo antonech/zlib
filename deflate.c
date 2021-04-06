@@ -143,12 +143,20 @@ static uint32_t hash_func(deflate_state *s, void* str) {
     return __crc32cw(0, *(uint32_t*)str) & s->hash_mask;
 }
 
-#elif defined __x86_64__ || defined _M_AMD64
-
+#elif defined __x86_64__ || defined _M_AMD64 || __x86_64
+#ifdef HAS_SSE42
 #include <immintrin.h>
 static uint32_t hash_func(deflate_state *s, void* str) {
     return _mm_crc32_u32(0, *(uint32_t*)str) & s->hash_mask;
 }
+#else
+#include <smmintrin.h>
+static uint32_t hash_func(deflate_state *s, void* str) {
+    uint32_t hash_shift = ((s->hash_bits+MIN_MATCH-1)/MIN_MATCH);
+    void* str_shift = (void*)((uint8_t*)str + (MIN_MATCH-1));
+    return (((s->ins_h)<<hash_shift) ^ (*(uint32_t*)str_shift)) & s->hash_mask;
+}
+#endif
 
 #else
 
@@ -1373,7 +1381,7 @@ static void fill_window(s)
                 q+=8;
             }
 
-#elif defined __x86_64__ || defined _M_AMD64
+#elif defined __x86_64__ || defined _M_AMD64 || __x86_64
 
             __m128i  W;
             __m128i *q;

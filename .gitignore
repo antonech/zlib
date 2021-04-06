@@ -26,5 +26,5 @@
 .DS_Store
 
 /build
-/Makefile
+# /Makefile # to allow check-ins
 /configure.log
